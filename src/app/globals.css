@@ -12,37 +12,60 @@
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
   }
-}
 
-@layer base {
-  html, body {
-    @apply h-full overflow-hidden;
+  html {
+    @apply h-full;
   }
-  
+
   body {
-    @apply bg-white text-zinc-900 dark:bg-gray-900 dark:text-zinc-50;
+    @apply h-full text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900;
   }
 }
 
-.sidebar-icon {
-  @apply w-5 h-5 text-white hover:text-gray-400 cursor-pointer;
+@layer components {
+  .sidebar-icon {
+    @apply h-5 w-5 text-white;
+  }
 }
 
+/* Custom scrollbar styles */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-700 rounded;
+  @apply bg-gray-400 dark:bg-gray-600 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-600;
+  @apply bg-gray-500 dark:bg-gray-500;
+}
+
+/* Next.js specific */
+#__next {
+  @apply h-full;
+}
+
+/* Custom styles for specific components */
+.callout-text {
+  @apply text-sm text-gray-500 dark:text-gray-400;
+}
+
+.input-base {
+  @apply px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700;
+}
+
+.btn-primary {
+  @apply px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors;
 }
 
 /* Chart customizations */

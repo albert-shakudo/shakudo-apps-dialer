@@ -1,24 +1,28 @@
 import { 
-  ChartBarIcon, 
+  PhoneIcon, 
   UserGroupIcon, 
-  CalendarIcon, 
+  ClockIcon,
   ChatBubbleLeftRightIcon,
-  GlobeAltIcon,
-  DocumentTextIcon,
-  ArrowDownTrayIcon
+  Cog6ToothIcon,
+  InboxStackIcon,
+  DocumentChartBarIcon,
+  BellIcon,
+  ChartBarSquareIcon
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export function Sidebar() {
   const navigationItems = [
-    { icon: <ChartBarIcon className="sidebar-icon" />, href: "/" },
-    { icon: <UserGroupIcon className="sidebar-icon" />, href: "/users" },
-    { icon: <CalendarIcon className="sidebar-icon" />, href: "/calendar" },
-    { icon: <ChatBubbleLeftRightIcon className="sidebar-icon" />, href: "/chat" },
-    { icon: <GlobeAltIcon className="sidebar-icon" />, href: "/globe" },
-    { icon: <DocumentTextIcon className="sidebar-icon" />, href: "/documents" },
-    { icon: <ArrowDownTrayIcon className="sidebar-icon" />, href: "/downloads" },
+    { icon: <PhoneIcon className="sidebar-icon" />, href: "/" },
+    { icon: <UserGroupIcon className="sidebar-icon" />, href: "/contacts" },
+    { icon: <ClockIcon className="sidebar-icon" />, href: "/call-history" },
+    { icon: <ChatBubbleLeftRightIcon className="sidebar-icon" />, href: "/messages" },
+    { icon: <DocumentChartBarIcon className="sidebar-icon" />, href: "/reports" },
+    { icon: <ChartBarSquareIcon className="sidebar-icon" />, href: "/bdr-performance", tooltip: "BDR Performance" },
+    { icon: <InboxStackIcon className="sidebar-icon" />, href: "/voicemail" },
+    { icon: <BellIcon className="sidebar-icon" />, href: "/notifications" },
+    { icon: <Cog6ToothIcon className="sidebar-icon" />, href: "/settings" },
   ];
 
   return (
@@ -38,9 +42,15 @@ export function Sidebar() {
           <Link 
             key={index} 
             href={item.href}
-            className="transition-colors duration-200"
+            className="transition-colors duration-200 text-white hover:text-gray-300 group relative"
+            title={item.tooltip}
           >
             {item.icon}
+            {item.tooltip && (
+              <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity whitespace-nowrap">
+                {item.tooltip}
+              </span>
+            )}
           </Link>
         ))}
       </nav>
