@@ -1,0 +1,18 @@
+.campaign-details {
+    display: flex; /* Use flexbox to align items in a row */
+    align-items: center; /* Center items vertically */
+    gap: 10px; /* Add space between items */
+}
+
+.campaign-title {
+    font-weight: bold; /* Make the title bold */
+}
+
+.ai-budget-optimizer {
+    background-color: #007bff; /* Example button color */
+    color: white; /* Button text color */
+    border: none; /* Remove border */
+    padding: 10px 15px; /* Add padding */
+    cursor: pointer; /* Change cursor on hover */
+    height: 40px; /* Ensure button height matches title */
+} 

@@ -1,0 +1,669 @@
+"use client";
+
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import type { ChartData, ChartOptions } from 'chart.js';
+
+// Dynamically import chart components with no SSR
+const Line = dynamic(
+  () => import('react-chartjs-2').then(mod => mod.Line),
+  { ssr: false }
+);
+
+// Register chart components on client side only
+const registerChartComponents = async () => {
+  if (typeof window !== 'undefined') {
+    const { Chart: ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } = await import('chart.js');
+    ChartJS.register(
+      CategoryScale,
+      LinearScale,
+      PointElement,
+      LineElement,
+      Title,
+      Tooltip,
+      Legend
+    );
+  }
+};
+
+// Register components
+registerChartComponents();
+
+interface Campaign {
+  name: string;
+  unitCost: number;
+  mqlMeetings: number;
+  hubspotMeetings: number;
+  hubspotContacts: number;
+  status: 'ACTIVE' | 'PAUSED';
+  budget: number;
+}
+
+interface OptimizerParams {
+  selectedCampaigns: string[];
+  targetCPA: number;
+  maxDailyBudget: number;
+  minDailyBudget: number;
+  optimizationGoal: 'conversions' | 'spend' | 'balanced';
+  riskTolerance: 'low' | 'medium' | 'high';
+}
+
+const sampleData: Campaign[] = [
+  {
+    name: 'us-dr-crm-cloud-enterprise',
+    unitCost: 425.00,
+    mqlMeetings: 245,
+    hubspotMeetings: 180,
+    hubspotContacts: 892,
+    status: 'ACTIVE',
+    budget: 12500.00,
+  },
+  {
+    name: 'global-brand-sf-dreamforce-cxo',
+    unitCost: 850.00,
+    mqlMeetings: 520,
+    hubspotMeetings: 380,
+    hubspotContacts: 1450,
+    status: 'ACTIVE',
+    budget: 45000.00,
+  },
+  {
+    name: 'emea-dr-sales-cloud-finserv',
+    unitCost: 380.00,
+    mqlMeetings: 180,
+    hubspotMeetings: 120,
+    hubspotContacts: 640,
+    status: 'ACTIVE',
+    budget: 8500.00,
+  },
+  {
+    name: 'apac-dr-service-cloud-retail',
+    unitCost: 290.00,
+    mqlMeetings: 145,
+    hubspotMeetings: 95,
+    hubspotContacts: 420,
+    status: 'ACTIVE',
+    budget: 6800.00,
+  },
+  {
+    name: 'us-content-mkt-cloud-commerce',
+    unitCost: 175.00,
+    mqlMeetings: 85,
+    hubspotMeetings: 45,
+    hubspotContacts: 320,
+    status: 'PAUSED',
+    budget: 4200.00,
+  },
+  {
+    name: 'latam-dr-analytics-cloud-tech',
+    unitCost: 210.00,
+    mqlMeetings: 95,
+    hubspotMeetings: 65,
+    hubspotContacts: 280,
+    status: 'ACTIVE',
+    budget: 5500.00,
+  },
+  {
+    name: 'global-event-tableau-summit-it',
+    unitCost: 620.00,
+    mqlMeetings: 340,
+    hubspotMeetings: 260,
+    hubspotContacts: 980,
+    status: 'ACTIVE',
+    budget: 28000.00,
+  },
+  {
+    name: 'us-dr-slack-enterprise-collab',
+    unitCost: 310.00,
+    mqlMeetings: 165,
+    hubspotMeetings: 120,
+    hubspotContacts: 580,
+    status: 'ACTIVE',
+    budget: 7800.00,
+  },
+  {
+    name: 'emea-content-mulesoft-api-dev',
+    unitCost: 280.00,
+    mqlMeetings: 125,
+    hubspotMeetings: 85,
+    hubspotContacts: 420,
+    status: 'PAUSED',
+    budget: 6200.00,
+  },
+  {
+    name: 'us-brand-net0-cloud-sustain',
+    unitCost: 390.00,
+    mqlMeetings: 190,
+    hubspotMeetings: 140,
+    hubspotContacts: 680,
+    status: 'ACTIVE',
+    budget: 9500.00,
+  },
+  {
+    name: 'global-dr-genie-ai-platform',
+    unitCost: 580.00,
+    mqlMeetings: 280,
+    hubspotMeetings: 210,
+    hubspotContacts: 920,
+    status: 'ACTIVE',
+    budget: 18500.00,
+  }
+];
+
+function AIBudgetOptimizer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [step, setStep] = useState<'params' | 'results'>('params');
+  const [params, setParams] = useState<OptimizerParams>({
+    selectedCampaigns: [],
+    targetCPA: 500,
+    maxDailyBudget: 50000,
+    minDailyBudget: 1000,
+    optimizationGoal: 'balanced',
+    riskTolerance: 'medium',
+  });
+
+  const generateChartData = (): ChartData<'line'> => {
+    const dates = [];
+    const currentSpend = [];
+    const predictedSpend = [];
+    const currentConversions = [];
+    const predictedConversions = [];
+    
+    // Generate past 3 months data
+    for (let i = 90; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      dates.push(date.toLocaleDateString());
+      currentSpend.push(Math.random() * 40000 + 10000);
+      currentConversions.push(Math.random() * 100 + 50);
+    }
+
+    // Generate future 3 months predictions
+    for (let i = 1; i <= 90; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      dates.push(date.toLocaleDateString());
+      predictedSpend.push(Math.random() * 35000 + 8000);
+      predictedConversions.push(Math.random() * 120 + 60);
+    }
+
+    return {
+      labels: dates,
+      datasets: [
+        {
+          label: 'Current/Historical Spend',
+          data: [...currentSpend, ...new Array(90).fill(null)],
+          borderColor: 'rgb(0, 0, 0)',
+          tension: 0.1,
+        },
+        {
+          label: 'Predicted Spend',
+          data: [...new Array(90).fill(null), ...predictedSpend],
+          borderColor: 'rgb(0, 0, 0)',
+          borderDash: [5, 5],
+          tension: 0.1,
+        },
+        {
+          label: 'Current/Historical Conversions',
+          data: [...currentConversions, ...new Array(90).fill(null)],
+          borderColor: 'rgb(100, 100, 100)',
+          tension: 0.1,
+        },
+        {
+          label: 'Predicted Conversions',
+          data: [...new Array(90).fill(null), ...predictedConversions],
+          borderColor: 'rgb(100, 100, 100)',
+          borderDash: [5, 5],
+          tension: 0.1,
+        },
+      ],
+    };
+  };
+
+  const chartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+      x: {
+        ticks: {
+          maxTicksLimit: 8,
+          maxRotation: 0
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          boxWidth: 12,
+          padding: 8
+        }
+      },
+      title: {
+        display: true,
+        text: 'AI Budget Optimization Forecast',
+        font: {
+          size: 14
+        }
+      },
+    },
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            AI Budget Optimizer
+          </h2>
+          <div className="flex items-center gap-3">
+            <div className="text-xs px-2 py-1 bg-gray-100 rounded-full">
+              {step === 'params' ? 'Step 1: Configure' : 'Step 2: Results'}
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-900 p-1"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-4">
+          {step === 'params' ? (
+            <div className="grid grid-cols-12 gap-4">
+              {/* Left column - Campaign selection */}
+              <div className="col-span-5 border-r border-gray-200 dark:border-gray-700 pr-4">
+                <div className="mb-3">
+                  <label className="block text-sm font-medium mb-1">Select Campaigns to Optimize</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Search campaigns..." 
+                      className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 mb-2"
+                    />
+                  </div>
+                  <div className="h-[280px] overflow-y-auto border border-gray-200 rounded-md p-2">
+                    <div className="flex justify-between mb-2 px-1">
+                      <button className="text-xs text-gray-500 hover:text-black">Select All</button>
+                      <button className="text-xs text-gray-500 hover:text-black">Clear</button>
+                    </div>
+                    <div className="space-y-1">
+                      {sampleData.map((campaign) => (
+                        <label key={campaign.name} className="flex items-center text-sm p-1 hover:bg-gray-50 rounded">
+                          <input
+                            type="checkbox"
+                            className="mr-2 h-3.5 w-3.5 rounded border-gray-300 text-black focus:ring-gray-500"
+                            checked={params.selectedCampaigns.includes(campaign.name)}
+                            onChange={(e) => {
+                              setParams(prev => ({
+                                ...prev,
+                                selectedCampaigns: e.target.checked
+                                  ? [...prev.selectedCampaigns, campaign.name]
+                                  : prev.selectedCampaigns.filter(name => name !== campaign.name)
+                              }));
+                            }}
+                          />
+                          <span className="truncate">{campaign.name}</span>
+                          <span className="ml-auto text-xs text-gray-500">${campaign.budget.toFixed(0)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right column - Parameters */}
+              <div className="col-span-7 pl-2">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium mb-1">Optimization Strategy</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button 
+                        className={`text-sm py-2 px-3 rounded-md border ${params.optimizationGoal === 'conversions' ? 'bg-black text-white border-black' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}
+                        onClick={() => setParams(prev => ({ ...prev, optimizationGoal: 'conversions' }))}
+                      >
+                        Max Conversions
+                      </button>
+                      <button 
+                        className={`text-sm py-2 px-3 rounded-md border ${params.optimizationGoal === 'spend' ? 'bg-black text-white border-black' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}
+                        onClick={() => setParams(prev => ({ ...prev, optimizationGoal: 'spend' }))}
+                      >
+                        Min Spend
+                      </button>
+                      <button 
+                        className={`text-sm py-2 px-3 rounded-md border ${params.optimizationGoal === 'balanced' ? 'bg-black text-white border-black' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}
+                        onClick={() => setParams(prev => ({ ...prev, optimizationGoal: 'balanced' }))}
+                      >
+                        Balanced
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Target CPA ($)</label>
+                    <input
+                      type="number"
+                      value={params.targetCPA}
+                      onChange={(e) => setParams(prev => ({ ...prev, targetCPA: Number(e.target.value) }))}
+                      className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Risk Tolerance</label>
+                    <div className="relative">
+                      <select
+                        value={params.riskTolerance}
+                        onChange={(e) => setParams(prev => ({ ...prev, riskTolerance: e.target.value as 'low' | 'medium' | 'high' }))}
+                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 appearance-none"
+                      >
+                        <option value="low">Conservative (Low)</option>
+                        <option value="medium">Moderate (Medium)</option>
+                        <option value="high">Aggressive (High)</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                        <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium mb-1">Daily Budget Range ($)</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 text-sm">Min</span>
+                        <input
+                          type="number"
+                          value={params.minDailyBudget}
+                          onChange={(e) => setParams(prev => ({ ...prev, minDailyBudget: Number(e.target.value) }))}
+                          className="w-full pl-12 pr-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500"
+                        />
+                      </div>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 text-sm">Max</span>
+                        <input
+                          type="number"
+                          value={params.maxDailyBudget}
+                          onChange={(e) => setParams(prev => ({ ...prev, maxDailyBudget: Number(e.target.value) }))}
+                          className="w-full pl-12 pr-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium mb-1">Advanced Options</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="weekendAdjustment"
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-black focus:ring-gray-500"
+                        />
+                        <label htmlFor="weekendAdjustment" className="ml-2 text-sm text-gray-700">Weekend Adjustment</label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="seasonalTrends"
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-black focus:ring-gray-500"
+                        />
+                        <label htmlFor="seasonalTrends" className="ml-2 text-sm text-gray-700">Seasonal Trends</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 mt-2">
+                    <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">Selected Campaigns</div>
+                        <div className="text-sm font-medium">{params.selectedCampaigns.length} of {sampleData.length}</div>
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500">
+                        Total Current Budget: ${sampleData
+                          .filter(c => params.selectedCampaigns.includes(c.name))
+                          .reduce((sum, c) => sum + c.budget, 0).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-8">
+                <div className="h-[300px]">
+                  <Line
+                    data={generateChartData()}
+                    options={chartOptions}
+                  />
+                </div>
+              </div>
+              
+              <div className="col-span-4 flex flex-col gap-3">
+                <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                  <h3 className="font-bold text-gray-800 text-sm mb-2">Projected Improvements</h3>
+                  <ul className="space-y-1.5 text-xs text-gray-700">
+                    <li className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                      23% increase in conversions
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                      15% reduction in CPA
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      18% better budget utilization
+                    </li>
+                  </ul>
+                </div>
+                
+                <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                  <h3 className="font-bold text-gray-800 text-sm mb-2">AI Recommendations</h3>
+                  <ul className="space-y-1.5 text-xs text-gray-700">
+                    <li className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      Reallocate budget from underperforming campaigns
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      Increase spend during high-converting time periods
+                    </li>
+                    <li className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      Adjust bid strategies for optimal performance
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="col-span-12">
+                <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                  <h3 className="font-bold text-gray-800 text-sm mb-2">Campaign-Specific Recommendations</h3>
+                  <div className="grid grid-cols-3 gap-3 mt-2">
+                    {params.selectedCampaigns.slice(0, 3).map(name => {
+                      const campaign = sampleData.find(c => c.name === name);
+                      return (
+                        <div key={name} className="bg-white p-2 rounded border border-gray-200 text-xs">
+                          <div className="font-medium truncate">{name}</div>
+                          <div className="mt-1 flex justify-between">
+                            <span>Current: ${campaign?.budget.toFixed(0) || '0'}</span>
+                            <span className="font-medium">→</span>
+                            <span>Recommended: ${campaign ? (campaign.budget * 1.2).toFixed(0) : '0'}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex justify-between">
+            {step === 'params' ? (
+              <>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setStep('results')}
+                  className="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800 transition-colors flex items-center gap-1"
+                >
+                  <span>Run AI Optimization</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setStep('params')}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Back to Parameters</span>
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 bg-black text-white rounded-md text-sm hover:bg-gray-800 transition-colors"
+                >
+                  Apply Recommendations
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CampaignsTable() {
+  const [isOptimizerOpen, setIsOptimizerOpen] = useState(false);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Campaign Overview</h2>
+        <button
+          className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm"
+          onClick={() => setIsOptimizerOpen(true)}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>AI Budget Optimizer</span>
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Campaign Name
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Unit Cost
+                  <InformationCircleIcon className="inline-block w-3 h-3 ml-1" />
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  MQL Meetings
+                  <InformationCircleIcon className="inline-block w-3 h-3 ml-1" />
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  HubSpot Meetings
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  HubSpot Contacts
+                  <InformationCircleIcon className="inline-block w-3 h-3 ml-1" />
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Current Daily Budget
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {sampleData.map((campaign, idx) => (
+                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-4 py-2 whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white">
+                    {campaign.name}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                    ${campaign.unitCost.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                    {campaign.mqlMeetings}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                    {campaign.hubspotMeetings}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                    {campaign.hubspotContacts}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                      campaign.status === 'ACTIVE' 
+                        ? 'bg-gray-200 text-gray-900' 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {campaign.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                    ${campaign.budget.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <AIBudgetOptimizer
+        isOpen={isOptimizerOpen}
+        onClose={() => setIsOptimizerOpen(false)}
+      />
+    </div>
+  );
+} 
