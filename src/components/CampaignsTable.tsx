@@ -1,9 +1,11 @@
 "use client";
 
-import { InformationCircleIcon } from '@heroicons/react/24/outline';
+import { InformationCircleIcon, PencilIcon, TrashIcon, ChartBarIcon, PauseIcon, PlayIcon, ArrowUpIcon, ArrowDownIcon, MinusIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { ChartData, ChartOptions } from 'chart.js';
+import React from 'react';
+import Image from 'next/image';
 
 // Dynamically import chart components with no SSR
 const Line = dynamic(
@@ -30,6 +32,19 @@ const registerChartComponents = async () => {
 // Register components
 registerChartComponents();
 
+// Map channel to icon paths
+const getChannelIconPath = (channel: string): string => {
+  switch (channel) {
+    case 'meta': return '/images/meta-icon.svg';
+    case 'linkedin': return '/images/linkedin-app-icon.svg';
+    case 'google': return '/images/google-ads-icon.svg';
+    case 'twitter': return '/images/x-social-media-black-icon.svg';
+    case 'quora': return '/images/quora-icon.svg';
+    case 'reddit': return '/images/reddit-icon.svg';
+    default: return '/images/x-social-media-black-icon.svg';
+  }
+};
+
 interface Campaign {
   name: string;
   unitCost: number;
@@ -38,6 +53,9 @@ interface Campaign {
   hubspotContacts: number;
   status: 'ACTIVE' | 'PAUSED';
   budget: number;
+  channel: 'meta' | 'linkedin' | 'google' | 'twitter' | 'quora' | 'reddit';
+  roi: number;
+  trend: 'up' | 'down' | 'stable';
 }
 
 interface OptimizerParams {
@@ -58,6 +76,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 892,
     status: 'ACTIVE',
     budget: 12500.00,
+    channel: 'twitter',
+    roi: 3.2,
+    trend: 'up'
   },
   {
     name: 'global-brand-sf-dreamforce-cxo',
@@ -67,6 +88,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 1450,
     status: 'ACTIVE',
     budget: 45000.00,
+    channel: 'linkedin',
+    roi: 2.8,
+    trend: 'stable'
   },
   {
     name: 'emea-dr-sales-cloud-finserv',
@@ -76,6 +100,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 640,
     status: 'ACTIVE',
     budget: 8500.00,
+    channel: 'google',
+    roi: 2.1,
+    trend: 'up'
   },
   {
     name: 'apac-dr-service-cloud-retail',
@@ -85,6 +112,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 420,
     status: 'ACTIVE',
     budget: 6800.00,
+    channel: 'linkedin',
+    roi: 1.9,
+    trend: 'down'
   },
   {
     name: 'us-content-mkt-cloud-commerce',
@@ -94,6 +124,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 320,
     status: 'PAUSED',
     budget: 4200.00,
+    channel: 'twitter',
+    roi: 1.5,
+    trend: 'stable'
   },
   {
     name: 'latam-dr-analytics-cloud-tech',
@@ -103,6 +136,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 280,
     status: 'ACTIVE',
     budget: 5500.00,
+    channel: 'quora',
+    roi: 2.3,
+    trend: 'up'
   },
   {
     name: 'global-event-tableau-summit-it',
@@ -112,6 +148,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 980,
     status: 'ACTIVE',
     budget: 28000.00,
+    channel: 'meta',
+    roi: 3.7,
+    trend: 'up'
   },
   {
     name: 'us-dr-slack-enterprise-collab',
@@ -121,6 +160,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 580,
     status: 'ACTIVE',
     budget: 7800.00,
+    channel: 'reddit',
+    roi: 2.5,
+    trend: 'stable'
   },
   {
     name: 'emea-content-mulesoft-api-dev',
@@ -130,6 +172,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 420,
     status: 'PAUSED',
     budget: 6200.00,
+    channel: 'google',
+    roi: 1.8,
+    trend: 'down'
   },
   {
     name: 'us-brand-net0-cloud-sustain',
@@ -139,6 +184,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 680,
     status: 'ACTIVE',
     budget: 9500.00,
+    channel: 'linkedin',
+    roi: 2.6,
+    trend: 'stable'
   },
   {
     name: 'global-dr-genie-ai-platform',
@@ -148,6 +196,9 @@ const sampleData: Campaign[] = [
     hubspotContacts: 920,
     status: 'ACTIVE',
     budget: 18500.00,
+    channel: 'meta',
+    roi: 3.1,
+    trend: 'up'
   }
 ];
 
@@ -314,7 +365,18 @@ function AIBudgetOptimizer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                               }));
                             }}
                           />
-                          <span className="truncate">{campaign.name}</span>
+                          <div className="flex items-center space-x-2 relative">
+                            <div className="relative w-6 h-6 mr-2 flex-shrink-0">
+                              <Image 
+                                src={getChannelIconPath(campaign.channel)}
+                                alt={campaign.channel}
+                                width={16}
+                                height={16}
+                                className="object-contain"
+                              />
+                            </div>
+                            <span className="truncate">{campaign.name}</span>
+                          </div>
                           <span className="ml-auto text-xs text-gray-500">${campaign.budget.toFixed(0)}</span>
                         </label>
                       ))}
@@ -576,20 +638,43 @@ function AIBudgetOptimizer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 
 export function CampaignsTable() {
   const [isOptimizerOpen, setIsOptimizerOpen] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState<string>('all');
+  const [hoveredAction, setHoveredAction] = useState<string | null>(null);
+
+  const filteredData = selectedChannel === 'all' 
+    ? sampleData 
+    : sampleData.filter(campaign => campaign.channel === selectedChannel);
+
+  const channels = ['all', ...Array.from(new Set(sampleData.map(c => c.channel)))];
 
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Campaign Overview</h2>
-        <button
-          className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm"
-          onClick={() => setIsOptimizerOpen(true)}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <span>AI Budget Optimizer</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center">
+            <label htmlFor="channel-filter" className="text-sm mr-2 text-gray-600">Filter by Channel:</label>
+            <select
+              id="channel-filter"
+              value={selectedChannel}
+              onChange={(e) => setSelectedChannel(e.target.value)}
+              className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500"
+            >
+              {channels.map(channel => (
+                <option key={channel} value={channel}>{channel === 'all' ? 'All Channels' : channel.charAt(0).toUpperCase() + channel.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm whitespace-nowrap"
+            onClick={() => setIsOptimizerOpen(true)}
+          >
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span className="flex-shrink-0">AI Budget Optimizer</span>
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
@@ -597,6 +682,12 @@ export function CampaignsTable() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10">
+                  
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Channel
+                </th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Campaign Name
                 </th>
@@ -621,11 +712,36 @@ export function CampaignsTable() {
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Current Daily Budget
                 </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  ROI
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Trend
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {sampleData.map((campaign, idx) => (
+              {filteredData.map((campaign, idx) => (
                 <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-3 py-2 whitespace-nowrap text-xs">
+                    <div className="flex justify-center">
+                      <div className="relative w-4 h-4">
+                        <Image 
+                          src={getChannelIconPath(campaign.channel)}
+                          alt={campaign.channel}
+                          width={16}
+                          height={16}
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs">
+                    <span className="capitalize text-gray-600">{campaign.channel}</span>
+                  </td>
                   <td className="px-4 py-2 whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white">
                     {campaign.name}
                   </td>
@@ -644,7 +760,7 @@ export function CampaignsTable() {
                   <td className="px-4 py-2 whitespace-nowrap text-xs">
                     <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
                       campaign.status === 'ACTIVE' 
-                        ? 'bg-gray-200 text-gray-900' 
+                        ? 'bg-green-100 text-green-800' 
                         : 'bg-gray-100 text-gray-600'
                     }`}>
                       {campaign.status}
@@ -652,6 +768,104 @@ export function CampaignsTable() {
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
                     ${campaign.budget.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs">
+                    <span className={`font-medium ${campaign.roi >= 3 ? 'text-green-600' : campaign.roi >= 2 ? 'text-blue-600' : 'text-gray-600'}`}>
+                      {campaign.roi.toFixed(1)}x
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs">
+                    {campaign.trend === 'up' ? (
+                      <div className="flex items-center text-green-600">
+                        <ArrowUpIcon className="w-3 h-3 mr-1" />
+                        <span>Up</span>
+                      </div>
+                    ) : campaign.trend === 'down' ? (
+                      <div className="flex items-center text-red-600">
+                        <ArrowDownIcon className="w-3 h-3 mr-1" />
+                        <span>Down</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-gray-600">
+                        <MinusIcon className="w-3 h-3 mr-1" />
+                        <span>Stable</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-xs">
+                    <div className="flex items-center space-x-2 relative">
+                      <button 
+                        className="text-gray-500 hover:text-blue-600 transition-colors" 
+                        title="Edit Campaign"
+                        onMouseEnter={() => setHoveredAction(`edit-${idx}`)}
+                        onMouseLeave={() => setHoveredAction(null)}
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
+                      {hoveredAction === `edit-${idx}` && (
+                        <div className="absolute z-10 bg-gray-800 text-white text-xs rounded py-1 px-2 left-0 -top-8 whitespace-nowrap">
+                          Edit Campaign
+                        </div>
+                      )}
+                      
+                      <button 
+                        className="text-gray-500 hover:text-green-600 transition-colors" 
+                        title="View Analytics"
+                        onMouseEnter={() => setHoveredAction(`analytics-${idx}`)}
+                        onMouseLeave={() => setHoveredAction(null)}
+                      >
+                        <ChartBarIcon className="w-4 h-4" />
+                      </button>
+                      {hoveredAction === `analytics-${idx}` && (
+                        <div className="absolute z-10 bg-gray-800 text-white text-xs rounded py-1 px-2 left-8 -top-8 whitespace-nowrap">
+                          View Analytics
+                        </div>
+                      )}
+                      
+                      {campaign.status === 'ACTIVE' ? (
+                        <button 
+                          className="text-gray-500 hover:text-yellow-600 transition-colors" 
+                          title="Pause Campaign"
+                          onMouseEnter={() => setHoveredAction(`pause-${idx}`)}
+                          onMouseLeave={() => setHoveredAction(null)}
+                        >
+                          <PauseIcon className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button 
+                          className="text-gray-500 hover:text-green-600 transition-colors" 
+                          title="Activate Campaign"
+                          onMouseEnter={() => setHoveredAction(`play-${idx}`)}
+                          onMouseLeave={() => setHoveredAction(null)}
+                        >
+                          <PlayIcon className="w-4 h-4" />
+                        </button>
+                      )}
+                      {hoveredAction === `pause-${idx}` && (
+                        <div className="absolute z-10 bg-gray-800 text-white text-xs rounded py-1 px-2 left-16 -top-8 whitespace-nowrap">
+                          Pause Campaign
+                        </div>
+                      )}
+                      {hoveredAction === `play-${idx}` && (
+                        <div className="absolute z-10 bg-gray-800 text-white text-xs rounded py-1 px-2 left-16 -top-8 whitespace-nowrap">
+                          Activate Campaign
+                        </div>
+                      )}
+                      
+                      <button 
+                        className="text-gray-500 hover:text-red-600 transition-colors" 
+                        title="Delete Campaign"
+                        onMouseEnter={() => setHoveredAction(`delete-${idx}`)}
+                        onMouseLeave={() => setHoveredAction(null)}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                      {hoveredAction === `delete-${idx}` && (
+                        <div className="absolute z-10 bg-gray-800 text-white text-xs rounded py-1 px-2 left-24 -top-8 whitespace-nowrap">
+                          Delete Campaign
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

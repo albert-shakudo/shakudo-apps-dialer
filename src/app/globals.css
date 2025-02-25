@@ -25,7 +25,7 @@
 }
 
 .sidebar-icon {
-  @apply w-5 h-5 text-gray-400 hover:text-white cursor-pointer;
+  @apply w-5 h-5 text-white hover:text-gray-400 cursor-pointer;
 }
 
 ::-webkit-scrollbar {
