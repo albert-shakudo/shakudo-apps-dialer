@@ -29,7 +29,7 @@ export function Sidebar() {
     <aside className="w-14 h-full bg-black flex flex-col items-center py-4 fixed left-0 top-0 z-50">
       <div className="mb-8">
         <Image
-          src="/ShakudoAISuite-Revenue-CampaignManager.svg"
+          src="/ShakudoAISuite-Revenue-Dialer.svg"
           alt="Logo"
           width={24}
           height={24}
