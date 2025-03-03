@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
+  const [isParallelDialerEnabled, setIsParallelDialerEnabled] = useState(false);
 
   useEffect(() => {
     // Check system preference on mount
@@ -18,6 +19,17 @@ export function Header() {
   const toggleDarkMode = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle('dark');
+  };
+
+  const toggleParallelDialer = () => {
+    setIsParallelDialerEnabled(!isParallelDialerEnabled);
+    // Here we would dispatch an event or use context to notify other components
+    if (typeof window !== 'undefined') {
+      const event = new CustomEvent('toggleParallelDialer', { 
+        detail: { enabled: !isParallelDialerEnabled } 
+      });
+      window.dispatchEvent(event);
+    }
   };
 
   return (
@@ -44,6 +56,21 @@ export function Header() {
         </div>
         
         <div className="flex items-center gap-3">
+          {/* Parallel Dialer Toggle */}
+          <div className="flex items-center mr-3">
+            <span className="mr-2 text-sm font-medium">Parallel Dialer</span>
+            <button 
+              onClick={toggleParallelDialer}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 ${isParallelDialerEnabled ? 'bg-black' : 'bg-gray-200 dark:bg-gray-700'}`}
+              role="switch"
+              aria-checked={isParallelDialerEnabled}
+            >
+              <span 
+                className={`${isParallelDialerEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+              />
+            </button>
+          </div>
+          
           <button 
             onClick={toggleDarkMode}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
