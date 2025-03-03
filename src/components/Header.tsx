@@ -1,11 +1,17 @@
 "use client";
 
-import { MoonIcon, SunIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { 
+  MoonIcon, 
+  SunIcon, 
+  UserCircleIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  BriefcaseIcon 
+} from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
-  const [isParallelDialerEnabled, setIsParallelDialerEnabled] = useState(false);
 
   useEffect(() => {
     // Check system preference on mount
@@ -21,16 +27,13 @@ export function Header() {
     document.documentElement.classList.toggle('dark');
   };
 
-  const toggleParallelDialer = () => {
-    setIsParallelDialerEnabled(!isParallelDialerEnabled);
-    // Here we would dispatch an event or use context to notify other components
-    if (typeof window !== 'undefined') {
-      const event = new CustomEvent('toggleParallelDialer', { 
-        detail: { enabled: !isParallelDialerEnabled } 
-      });
-      window.dispatchEvent(event);
-    }
-  };
+  // Sample progress data
+  const progressData = [
+    { name: 'Calls', icon: PhoneIcon, current: 3, target: 12 },
+    { name: 'Emails', icon: EnvelopeIcon, current: 1, target: 4 },
+    { name: 'LinkedIn', icon: 'linkedin', current: 2, target: 4 },
+    { name: 'Meetings', icon: BriefcaseIcon, current: 0, target: 1 }
+  ];
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-14 flex items-center px-4 z-40 shrink-0">
@@ -54,23 +57,40 @@ export function Header() {
             />
           </div>
         </div>
+
+        {/* Daily Progress Section - Enhanced */}
+        <div className="flex items-center bg-white dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mr-3 whitespace-nowrap">Daily Progress</span>
+          <div className="flex space-x-5">
+            {progressData.map((item) => (
+              <div key={item.name} className="flex items-center" title={`${item.current}/${item.target} ${item.name}`}>
+                {item.icon === 'linkedin' ? (
+                  <div className="h-4 w-4 flex items-center justify-center text-gray-600 dark:text-gray-400 mr-1.5 text-sm">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                      <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"></path>
+                    </svg>
+                  </div>
+                ) : (
+                  <item.icon className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-1.5" />
+                )}
+                <div className="flex items-center">
+                  <div className="flex items-center mr-1">
+                    <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{item.current}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">/{item.target}</span>
+                  </div>
+                  <div className="w-14 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      className="h-1.5 rounded-full bg-black"
+                      style={{ width: `${(item.current / item.target) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
         
         <div className="flex items-center gap-3">
-          {/* Parallel Dialer Toggle */}
-          <div className="flex items-center mr-3">
-            <span className="mr-2 text-sm font-medium">Parallel Dialer</span>
-            <button 
-              onClick={toggleParallelDialer}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 ${isParallelDialerEnabled ? 'bg-black' : 'bg-gray-200 dark:bg-gray-700'}`}
-              role="switch"
-              aria-checked={isParallelDialerEnabled}
-            >
-              <span 
-                className={`${isParallelDialerEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-              />
-            </button>
-          </div>
-          
           <button 
             onClick={toggleDarkMode}
             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"

@@ -308,10 +308,10 @@ export function TranscriptionPanel({ contact }: TranscriptionPanelProps) {
           </div>
           
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center">
-              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.465a5 5 0 001.962 1.962m-1.962-8.464a5 5 0 018.464 0M18 9.75v6.75m0 0l-3-3m3 3l3-3" />
-              </svg>
+            <button className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeWidth="1.6" stroke="currentColor" aria-hidden="true" data-slot="icon" fill="none" className="w-5 h-5"> {/* Increased size from w-4 h-4 to w-5 h-5 */}
+              <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 18m-4.399-4.4A6 6 0 0 0 18 12.75v-1.5M9 9V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-.537 1.713M12 18.75a6 6 0 0 0 2.292-.455M12 18.75a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5m-4.02-6.762a3 3 0 0 1-2.718-2.718"></path>
+            </svg>
               Mute
             </button>
             <button className="px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 flex items-center">
